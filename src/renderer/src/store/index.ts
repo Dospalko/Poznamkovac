@@ -11,15 +11,24 @@ export const NotesAtom = unwrap(notesAtomAsync, (prev) => prev)
 
 export const selectedNoteAtomIndex = atom<number | null>(null)
 
-export const selectedNoteAtom = atom((get) => {
+const selectedNoteAtomAsync = atom(async (get) => {
   const selectedNoteIndex = get(selectedNoteAtomIndex)
   const notes = get(NotesAtom)
   if (selectedNoteIndex == null || !notes) return null
-
   const selectedNote = notes[selectedNoteIndex]
-  return { ...selectedNote, content: `Hello from Note${selectedNoteIndex}` }
-})
+  const noteContent = await window.context.readNote(selectedNote.title)
 
+  return { ...selectedNote, content: noteContent }
+})
+export const selectedNoteAtom = unwrap(
+  selectedNoteAtomAsync,
+  (prev) =>
+    prev ?? {
+      title: '',
+      lastEditTime: Date.now(),
+      content: ''
+    }
+)
 export const createEmptyNoteAtom = atom(null, (get, set) => {
   const notes = get(NotesAtom)
   if (!notes) return null
